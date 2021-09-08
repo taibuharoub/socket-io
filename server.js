@@ -5,7 +5,7 @@ const socket = require("socket.io");
 const app = express();
 
 let namespaces = require("./data/namespaces");
-console.log(namespaces);
+// console.log(namespaces);
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -14,24 +14,28 @@ const server = app.listen(3000, () => {
 });
 
 const io = socket(server);
+
 //io.on = io.of("/").on()
+//main namespace connection
 io.on("connection", (socket) => {
-  socket.emit("messageFromServer", {
-    data: "Welocome to the socket.IO Server",
+  //build an array to send back with the img and enpoint for each NS
+  let nsData = namespaces.map((ns) => {
+    return {
+      img: ns.img,
+      endpoint: ns.endpoint,
+    };
   });
-  socket.on("messageToServer", (dataFromClient) => {
-    console.log(dataFromClient);
-  });
-  //join level1 room
-  socket.join("level1");
-  io.of("/")
-    .to("level1")
-    .emit("joined", `${socket.id} says, I have joined the level 1 room`);
+  // console.log(nsData);
+
+  //send the nsData back yo the client. we need to use socket, Not io,
+  //coz we want it to go to just this client
+  socket.emit("nsList", nsData);
 });
 
-io.of("/admin").on("connection", (socket) => {
-  console.log("Someone connected to the admin channel");
-  io.of("/admin").emit("welcome", "Welcome to the Admin channel");
-  //   socket.join("level2");
-  //   io.of("/admin").to("level2").emit("welcome", "welocme to admin room");
+//Loop through each namespace and listen for a connection
+namespaces.forEach((namespace) => {
+  // console.log(namespace);
+  io.of(namespace?.endpoint).on("connection", (socket) => {
+    console.log(`${socket?.id} has joined ${namespace?.endpoint}`);
+  });
 });
