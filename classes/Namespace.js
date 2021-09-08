@@ -11,3 +11,5 @@ class Namespace {
     this.rooms.push(roomObj);
   }
 }
+
+module.exports = Namespace;
